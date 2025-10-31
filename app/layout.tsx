@@ -1,27 +1,38 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
+import { ComandaProvider } from "@/context/comanda-context";
 
-const inter = Inter({ subsets: ["latin"] })
+// 👇 1. IMPORTANDO O SEU THEME PROVIDER CUSTOMIZADO
+import { ThemeProvider } from "@/components/theme-provider";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Adega - Sistema de Gestão",
-  description: "Sistema completo de gestão para adega",
-    generator: 'v0.app'
-}
+  title: "CAPONE Adega",
+  description: "Gestão e cardápio.",
+};
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
+    // O seu provider customizado já mexe no <html>,
+    // então podemos manter o 'suppressHydrationWarning' por segurança
     <html lang="pt-BR" suppressHydrationWarning>
+      <head />
       <body className={inter.className}>
-        <ThemeProvider>{children}</ThemeProvider>
+        {/* 👇 2. CORREÇÃO: Chame o ThemeProvider SEM PROPS */}
+        <ThemeProvider>
+          <ComandaProvider>
+            {children}
+            <Toaster richColors theme="dark" />
+          </ComandaProvider>
+        </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }

@@ -29,7 +29,7 @@ export default function LoginPage() {
     // (Aqui você colocaria sua lógica real de autenticação)
 
     // Redireciona para a página /cardapio
-    router.push('/cardapio');
+    router.push('/admin/cardapio');
   };
 
   return (
