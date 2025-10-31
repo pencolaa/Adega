@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import Head from "next/head";
-// 👇 CORREÇÃO AQUI
-import { useRouter } from "next/navigation"; // Importado de 'next/navigation'
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { toast } from "sonner";
+import Link from "next/link"; // 👈 1. IMPORTAR O LINK
 
 // Importando os componentes da sua pasta 'ui'
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter, // 👈 2. IMPORTAR O CARD FOOTER
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -33,12 +34,12 @@ const formSchema = z.object({
   nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres."),
   cpf: z.string().length(11, "CPF deve ter 11 dígitos."),
   telefone: z.string().min(10, "Telefone inválido."),
-  mesa: z.coerce.number().min(1, "Mesa deve ser maior que 0."),
+  // CORREÇÃO do erro "uncontrolled input":
+  mesa: z.coerce.number().min(1, "Mesa deve ser maior que 0."), 
 });
 
 export default function Checkin() {
-  const router = useRouter(); // Agora esta linha vai funcionar
-  // Estado para bloquear o botão após o envio
+  const router = useRouter(); 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 2. Configurar o formulário com react-hook-form
@@ -48,7 +49,10 @@ export default function Checkin() {
       nome: "",
       cpf: "",
       telefone: "",
-      mesa: undefined,
+      // CORREÇÃO do erro "uncontrolled input":
+      // Mudei 'undefined' para '""' para evitar o erro do console
+      // (z.coerce.number() cuidará da conversão)
+      mesa: "" as any, 
     },
   });
 
@@ -63,17 +67,15 @@ export default function Checkin() {
 
     console.log("Dados do Cliente:", { ...values, horario: horarioFormatado });
 
-    // 4. Usar 'sonner' (da sua lista) para notificação
     toast.success("Entrada Confirmada!", {
       description: `Cliente: ${values.nome} | Mesa: ${values.mesa} | Horário: ${horarioFormatado}`,
       duration: 3000,
     });
 
-    // 5. Redirecionar após a notificação
     setTimeout(() => {
-      // No App Router, o 'router.push' espera uma string
+      // Redireciona para o cardápio do cliente
       router.push("/clients/cardapio"); 
-    }, 3000); // 3 segundos de espera
+    }, 3000); 
   }
 
   return (
@@ -81,7 +83,6 @@ export default function Checkin() {
       <Head>
         <title>Check-in na Mesa - CAPONE</title>
       </Head>
-      {/* Container principal com classes Tailwind (fundo escuro) */}
       <div className="flex min-h-screen w-full items-center justify-center bg-zinc-950 p-4">
         <Card className="w-full max-w-md border-zinc-800 bg-zinc-900 text-zinc-50">
           <CardHeader className="text-center">
@@ -93,9 +94,10 @@ export default function Checkin() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* 6. Construir o formulário com os componentes */}
+            {/* O formulário continua o mesmo */}
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                {/* ... (FormField de nome) ... */}
                 <FormField
                   control={form.control}
                   name="nome"
@@ -114,6 +116,7 @@ export default function Checkin() {
                   )}
                 />
                 <div className="grid grid-cols-2 gap-4">
+                  {/* ... (FormField de cpf) ... */}
                   <FormField
                     control={form.control}
                     name="cpf"
@@ -131,6 +134,7 @@ export default function Checkin() {
                       </FormItem>
                     )}
                   />
+                  {/* ... (FormField de telefone) ... */}
                   <FormField
                     control={form.control}
                     name="telefone"
@@ -149,6 +153,7 @@ export default function Checkin() {
                     )}
                   />
                 </div>
+                {/* ... (FormField de mesa) ... */}
                 <FormField
                   control={form.control}
                   name="mesa"
@@ -170,13 +175,26 @@ export default function Checkin() {
                 <Button
                   type="submit"
                   className="w-full bg-red-600 text-white hover:bg-red-700"
-                  disabled={isSubmitting} // Desabilita o botão
+                  disabled={isSubmitting} 
                 >
                   {isSubmitting ? "Confirmando..." : "Confirmar Entrada"}
                 </Button>
               </form>
             </Form>
           </CardContent>
+
+          {/* 👇 3. ADICIONE O BOTÃO DE LOGIN AQUI 👇 */}
+          <CardFooter>
+            <Button
+              variant="link"
+              className="w-full text-zinc-400 hover:text-red-600"
+              asChild // Permite que o Button funcione como um Link
+            >
+              <Link href="/admin/login-funcionarios">
+                Sou lojista / Funcionário
+              </Link>
+            </Button>
+          </CardFooter>
         </Card>
       </div>
     </>
