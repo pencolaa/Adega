@@ -1,12 +1,14 @@
 // app/login/page.tsx
-"use client"; // NOVO: Converte para Client Component
+"use client";
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { User, Lock } from 'lucide-react';
-import { useRouter } from 'next/navigation'; // NOVO: Importa o router
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import axios, { isAxiosError } from 'axios'; // Importação correta
 
-// NOVAS IMPORTAÇÕES dos seus componentes UI
+// Importações dos seus componentes UI (sem mudança)
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,24 +22,56 @@ import {
 } from '@/components/ui/card';
 
 export default function LoginPage() {
-  const router = useRouter(); // NOVO: Inicializa o router
+  const router = useRouter();
 
-  // NOVO: Função para lidar com o envio do formulário
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // Impede que o formulário recarregue a página
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-    // (Aqui você colocaria sua lógica real de autenticação)
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-    // Redireciona para a página /cardapio
-    router.push('/admin/cardapio');
+    try {
+      // 1. Fazer a requisição para sua API
+      const response = await axios.post(
+        // CORREÇÃO 1: Usando a variável de ambiente
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`, 
+        {
+          email: email,
+          password: password,
+        }
+      );
+
+      // 2. Salvar o token
+      const { token } = response.data;
+      localStorage.setItem('token', token);
+
+      // 3. Redirecionar para a página /admin/cardapio
+      router.push('/admin/cardapio');
+
+    } catch (err) {
+      let errorMessage = 'Erro ao fazer login. Verifique suas credenciais.';
+
+      if (isAxiosError(err)) {
+        // CORREÇÃO 2: Seu backend envia 'message', não 'msg'
+        errorMessage = err.response?.data?.message || 'Credenciais inválidas ou erro no servidor.';
+      }
+    
+      setError(errorMessage);
+    } finally {
+      // 5. Parar o estado de carregamento
+      setLoading(false);
+    }
   };
 
   return (
-    // O fundo principal continua o mesmo
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#18181B] p-6 text-white">
       <Card className="w-full max-w-sm border-none bg-zinc-900 text-white shadow-lg shadow-black/20">
         <CardHeader className="items-center text-center">
-          {/* 1. Logo */}
+          {/* Logo (sem mudança) */}
           <div className="relative mb-4 h-32 w-32 rounded-full border border-red-600 flex items-center justify-center overflow-hidden">
             <Image
               src="/caponelogo.jpg"
@@ -47,25 +81,20 @@ export default function LoginPage() {
               priority
             />
           </div>
-
           <CardTitle className="text-2xl font-semibold text-white">
             Acesso Exclusivo
           </CardTitle>
           <CardDescription className="text-gray-400">
             Login para funcionários
           </CardDescription>
-          {/* Detalhe da linha vermelha */}
           <div className="pt-2">
             <div className="h-1 w-16 bg-red-600" />
           </div>
         </CardHeader>
 
         <CardContent>
-          {/* 3. Formulário 
-              NOVO: Adicionado 'onSubmit' que chama a função handleLogin
-          */}
           <form className="space-y-6" onSubmit={handleLogin}>
-            {/* Campo de Email com <Label> e <Input> */}
+            {/* Campo de Email */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-gray-300">
                 Email
@@ -78,26 +107,32 @@ export default function LoginPage() {
                   type="email"
                   id="email"
                   name="email"
-                  className="pl-12" // Apenas ajuste de padding para o ícone
+                  className="pl-12"
                   placeholder="seu.email@capone.com"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading} 
                 />
               </div>
             </div>
 
-            {/* Campo de Senha com <Label> e <Input> */}
+            {/* Campo de Senha */}
             <div className="space-y-2">
-              <Label htmlFor="senha" className="text-gray-300">
+              <Label htmlFor="password" className="text-gray-300">
                 Senha
               </Label>
               <div className="relative">
                 <Input
                   type="password"
-                  id="senha"
-                  name="senha"
-                  className="pr-12" // Apenas ajuste de padding para o ícone
+                  id="password" 
+                  name="password" 
+                  className="pr-12"
                   placeholder="••••••••"
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
                 />
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5">
                   <Lock className="h-5 w-5 text-gray-400" />
@@ -105,7 +140,12 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* 4. Opções com <Checkbox> e <Label> */}
+            {/* Exibição da Mensagem de Erro */}
+            {error && (
+              <p className="text-center text-sm text-red-500">{error}</p>
+            )}
+
+            {/* Opções (sem mudança) */}
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <Checkbox id="lembrar-me" className="border-gray-600" />
@@ -124,19 +164,20 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            {/* 5. Botão de Entrar com <Button> */}
+            {/* Botão de Entrar */}
             <Button
-              type="submit" // Mantido como 'submit' para acionar o 'onSubmit' do formulário
+              type="submit"
               className="w-full bg-red-600 text-base font-semibold text-white hover:bg-red-700"
-              size="lg" // Usando props do componente
+              size="lg"
+              disabled={loading}
             >
-              Entrar
+              {loading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
         </CardContent>
       </Card>
 
-      {/* Rodapé (movido para fora do card, fixo no fim) */}
+      {/* Rodapé (sem mudança) */}
       <footer className="absolute bottom-0 w-full py-5 text-center">
         <p className="text-sm text-gray-500">
           © {new Date().getFullYear()} Capone. Todos os direitos reservados.
