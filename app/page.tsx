@@ -12,7 +12,7 @@ export default function SplashScreen() {
     // Simula um tempo de carregamento de 3 segundos
     const timer = setTimeout(() => {
       // Redireciona para a página de check-in que acabamos de mover
-      router.push("/clients/login-clientes");
+      router.push("/admin/login-funcionarios");
     }, 3000); // 3000ms = 3 segundos
 
     // Limpa o timer se o usuário sair da página

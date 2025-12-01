@@ -1,102 +1,173 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Navigation } from "@/components/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Edit, Trash2, Package } from "lucide-react"
-import { ProdutoDialog } from "@/components/produto-dialog"
+import { useState, useEffect } from "react";
+import { Navigation } from "@/components/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Search, Edit, Trash2, Package, Loader2 } from "lucide-react";
+import { ProdutoDialog } from "@/components/produto-dialog";
 
-interface Produto {
-  id: number
-  nome: string
-  descricao: string
-  categoria: string
-  preco: number
-  estoque: number
+interface Product {
+  id: number;
+  name: string;
+  description: string | null;
+  price: string;
+  category: string;
+  quantity: number;
+  isAvailable: boolean;
 }
 
-// Mock data inicial
-const produtosIniciais: Produto[] = [
-  {
-    id: 1,
-    nome: "Vinho Tinto Reserva",
-    descricao: "Cabernet Sauvignon, safra 2020",
-    categoria: "Vinhos",
-    preco: 89.9,
-    estoque: 15,
-  },
-  {
-    id: 2,
-    nome: "Vinho Branco Seco",
-    descricao: "Chardonnay, safra 2021",
-    categoria: "Vinhos",
-    preco: 75.0,
-    estoque: 20,
-  },
-  {
-    id: 3,
-    nome: "Cerveja Artesanal IPA",
-    descricao: "American IPA, 500ml",
-    categoria: "Cervejas",
-    preco: 18.0,
-    estoque: 30,
-  },
-  { id: 4, nome: "Caipirinha", descricao: "Limão, cachaça artesanal", categoria: "Drinks", preco: 18.0, estoque: 100 },
-  {
-    id: 5,
-    nome: "Tábua de Frios",
-    descricao: "Queijos, salames, azeitonas",
-    categoria: "Petiscos",
-    preco: 45.0,
-    estoque: 20,
-  },
-  { id: 6, nome: "Espumante Brut", descricao: "Método tradicional", categoria: "Vinhos", preco: 95.0, estoque: 8 },
-]
+interface Produto {
+  id: number;
+  nome: string;
+  descricao: string;
+  categoria: string;
+  preco: number;
+  estoque: number;
+}
 
 export default function ProdutosPage() {
-  const [produtos, setProdutos] = useState<Produto[]>(produtosIniciais)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingProduto, setEditingProduto] = useState<Produto | null>(null)
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingProduto, setEditingProduto] = useState<Produto | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/products");
+      if (!res.ok) {
+        throw new Error("Erro ao buscar produtos");
+      }
+      const data: Product[] = await res.json();
+
+      // Converte os dados da API para o formato esperado
+      const produtosFormatados = data.map((product) => ({
+        id: product.id,
+        nome: product.name,
+        descricao: product.description || "Sem descrição",
+        categoria: product.category,
+        preco: parseFloat(product.price),
+        estoque: product.quantity,
+      }));
+
+      setProdutos(produtosFormatados);
+    } catch (error) {
+      console.error("Erro ao buscar produtos:", error);
+      alert("Erro ao carregar produtos");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredProdutos = produtos.filter(
     (produto) =>
       produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      produto.categoria.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+      produto.categoria.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const handleAddProduto = (produto: Omit<Produto, "id">) => {
-    const newProduto = {
-      ...produto,
-      id: Math.max(...produtos.map((p) => p.id), 0) + 1,
+  const handleAddProduto = async (produto: Omit<Produto, "id">) => {
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: produto.nome,
+          description: produto.descricao || null,
+          price: produto.preco.toString(),
+          category: produto.categoria,
+          quantity: produto.estoque,
+          isAvailable: true,
+          image: null,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Erro ao criar produto");
+      }
+
+      await fetchProducts();
+      setDialogOpen(false);
+      alert("Produto criado com sucesso!");
+    } catch (error) {
+      console.error("Erro:", error);
+      alert("Erro ao criar produto. Tente novamente.");
     }
-    setProdutos([...produtos, newProduto])
-    setDialogOpen(false)
-  }
+  };
 
-  const handleEditProduto = (produto: Produto) => {
-    setProdutos(produtos.map((p) => (p.id === produto.id ? produto : p)))
-    setDialogOpen(false)
-    setEditingProduto(null)
-  }
+  const handleEditProduto = async (produto: Produto) => {
+    try {
+      const res = await fetch(`/api/products/${produto.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: produto.nome,
+          description: produto.descricao || null,
+          price: produto.preco.toString(),
+          category: produto.categoria,
+          quantity: produto.estoque,
+        }),
+      });
 
-  const handleDeleteProduto = (id: number) => {
-    if (confirm("Tem certeza que deseja excluir este produto?")) {
-      setProdutos(produtos.filter((p) => p.id !== id))
+      if (!res.ok) {
+        throw new Error("Erro ao atualizar produto");
+      }
+
+      await fetchProducts();
+      setDialogOpen(false);
+      setEditingProduto(null);
+      alert("Produto atualizado com sucesso!");
+    } catch (error) {
+      console.error("Erro:", error);
+      alert("Erro ao atualizar produto. Tente novamente.");
     }
-  }
+  };
+
+  const handleDeleteProduto = async (id: number) => {
+    if (!confirm("Tem certeza que deseja excluir este produto?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/products/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        throw new Error("Erro ao deletar produto");
+      }
+
+      await fetchProducts();
+      alert("Produto excluído com sucesso!");
+    } catch (error) {
+      console.error("Erro:", error);
+      alert("Erro ao excluir produto. Tente novamente.");
+    }
+  };
 
   const openEditDialog = (produto: Produto) => {
-    setEditingProduto(produto)
-    setDialogOpen(true)
-  }
+    setEditingProduto(produto);
+    setDialogOpen(true);
+  };
 
   const openAddDialog = () => {
-    setEditingProduto(null)
-    setDialogOpen(true)
+    setEditingProduto(null);
+    setDialogOpen(true);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   return (
@@ -223,5 +294,5 @@ export default function ProdutosPage() {
         onSave={editingProduto ? handleEditProduto : handleAddProduto}
       />
     </div>
-  )
+  );
 }

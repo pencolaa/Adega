@@ -20,7 +20,6 @@ export function Navigation() {
   const navLinks = [
     { href: "/", label: "Cardápio", icon: LayoutDashboard }, // (Ícone de exemplo, troque se quiser)
     { href: "/admin/fazer-pedido", label: "Fazer Pedido", icon: ShoppingCart },
-    { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/produtos", label: "Produtos", icon: Package },
     { href: "/admin/mesas", label: "Mesas", icon: Table2 },
     { href: "/admin/clientes", label: "Clientes", icon: Users },
@@ -46,16 +45,7 @@ export function Navigation() {
 
               <div className="hidden md:flex items-center gap-1">
                 {/* ... Seus links de desktop ... */}
-                <Link
-                  href="/admin/cardapio"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive("/cardapio")
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  Cardápio
-                </Link>
+
 
                 <Link
                   href="/admin/fazer-pedido"
@@ -67,18 +57,6 @@ export function Navigation() {
                 >
                   <ShoppingCart className="w-4 h-4 mr-1" />
                   Fazer Pedido
-                </Link>
-                {/* ... (restante dos seus links) ... */}
-                <Link
-                  href="/admin"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive("/admin")
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <LayoutDashboard className="w-4 h-4 inline mr-1" />
-                  Dashboard
                 </Link>
 
                 <Link
@@ -105,29 +83,6 @@ export function Navigation() {
                   Mesas
                 </Link>
 
-                <Link
-                  href="/admin/clientes"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive("/admin/clientes")
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <Users className="w-4 h-4 inline mr-1" />
-                  Clientes
-                </Link>
-
-                <Link
-                  href="/admin/funcionarios"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive("/admin/funcionarios")
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <UserCog className="w-4 h-4 inline mr-1" />
-                  Funcionários
-                </Link>
               </div>
             </div>
 
